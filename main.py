@@ -15,10 +15,10 @@ from image_spec_loader import ImageSpecLoader
 
 @dataclass
 class FRModelGLCM:
-    bin_to: int = 4
-    scale_division: int = 5
+    bin_to: int = 16
+    scale_division: int = 3
 
-    save_file_name: str = "result.pickle"
+    save_file_ext: str = ".pickle"
 
     def run(self):
         """ Runs the script to convert images to GLCM
@@ -38,7 +38,7 @@ class FRModelGLCM:
             im_spec = ImageSpecLoader.load(im_paths)
 
             slices = glcm_sliced(
-                GLCM(bin_to=self.bin_to),
+                GLCM(bin_to=self.bin_to, bin_from=1),
                 ar=im_spec.ar_normalized,
                 bounds_path=bounds_path,
                 scale_division=self.scale_division
@@ -77,7 +77,8 @@ class FRModelGLCM:
         """
         return OUTPUT_DIR \
                / Path(os.path.join(*input_dir.parts[1:])) \
-               / self.save_file_name
+               / (f"{self.bin_to}bins_{self.scale_division}xDownScale_"
+                  + self.save_file_ext)
 
     @staticmethod
     def get_bounds_paths() -> List[Path]:
