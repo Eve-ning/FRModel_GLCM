@@ -8,7 +8,7 @@ from typing import List
 
 from glcm_cupy import *
 
-from conf import INPUT_DIR, BOUNDS_FILE, IMAGE_EXTENSIONS, OUTPUT_DIR
+from conf import INPUT_DIR, BOUNDS_FILE, IMAGE_EXTENSIONS, OUTPUT_DIR, FEATURES
 from glcm_sliced import glcm_sliced
 from image_spec_loader import ImageSpecLoader
 
@@ -16,17 +16,12 @@ from image_spec_loader import ImageSpecLoader
 @dataclass
 class FRModelGLCM:
     bin_to: int = 16
-    scale_division: int = 3
+    scale_division: int = 1
 
     save_file_ext: str = ".pickle"
 
     def run(self):
-        """ Runs the script to convert images to GLCM
-
-        Returns
-        -------
-
-        """
+        """ Runs the script to convert images to GLCM """
         for bounds_path in self.get_bounds_paths():
             input_dir = bounds_path.parent
             if self.glcm_exists(input_dir):
@@ -36,14 +31,17 @@ class FRModelGLCM:
             im_paths = self.get_im_paths(input_dir)
 
             im_spec = ImageSpecLoader.load(im_paths)
-
             slices = glcm_sliced(
                 GLCM(bin_to=self.bin_to, bin_from=1),
                 ar=im_spec.ar_normalized,
                 bounds_path=bounds_path,
                 scale_division=self.scale_division
             )
-            self.save(slices, input_dir)
+            self.save(
+                dict(glcm=slices,
+                     channels=im_spec.channel_labels,
+                     features=FEATURES),
+                input_dir)
 
     def save(self, obj: object, input_dir: Path) -> None:
         """ Saves the object, relative to the input dir's pathing
@@ -77,7 +75,7 @@ class FRModelGLCM:
         """
         return OUTPUT_DIR \
                / Path(os.path.join(*input_dir.parts[1:])) \
-               / (f"{self.bin_to}bins_{self.scale_division}xDownScale_"
+               / (f"{self.bin_to}bins_{self.scale_division}xDownScale"
                   + self.save_file_ext)
 
     @staticmethod
@@ -128,11 +126,4 @@ class FRModelGLCM:
         return self.save_file_path(input_dir).exists()
 
 
-# %%
-FRModelGLCM().run()
-
-# %%
-FRModelGLCM.get_bounds_paths()
-# %%
-with open("outputs/18Dec2020/result.pickle", "rb") as f:
-    out = pickle.load(f)
+FRModelGLCM(bin_to=2**6).run()
