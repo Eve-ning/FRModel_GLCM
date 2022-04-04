@@ -1,12 +1,10 @@
 from pathlib import Path
 
-import numpy as np
 import tifffile
-from PIL import Image
 
 FILE_INFO = {
     "result.tif":
-        dict(bits=8, channels=[0,1,2],
+        dict(bits=8, channels=[0, 1, 2],
              channel_names=["Wideband Red", "Wideband Green", "Wideband Blue"],
              read_method=tifffile.imread),
     "result_Red.tif":
@@ -30,3 +28,14 @@ OUTPUT_DIR = Path("outputs")
 BOUNDS_FILE = "bounds.csv"
 
 IMAGE_EXTENSIONS = ['tif', 'png', 'jpg']
+FEATURES = ["NONE",
+            "HOMOGENEITY",
+            "CONTRAST",
+            "ASM",
+            "MEAN_I",
+            "MEAN_J",
+            "VAR_I",
+            "VAR_J",
+            "CORRELATION",]
+
+
