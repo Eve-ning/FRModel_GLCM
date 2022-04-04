@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import numpy as np
+import pandas as pd
 from pathlib import Path
 from typing import Dict
 
-import numpy as np
-import pandas as pd
-from glcm_cupy import GLCM
+from glcm_cupy import *
 
 
 def glcm_sliced(glcm: GLCM,
@@ -48,7 +48,10 @@ def glcm_sliced(glcm: GLCM,
         bound[['y0', 'y1', 'x0', 'x1']] //= scale_division
 
         ar_slice = ar[bound['y0']:bound['y1'], bound['x0']:bound['x1']]
+        ar_slice = glcm_pixel_normalize(ar_slice)
         g = glcm.run(ar_slice)
+        crop = glcm.step_size + glcm.radius
+        g = np.concatenate([ar_slice[crop:-crop, crop:-crop, :, np.newaxis], g], axis=3)
 
         # Append to list if the key exists, else create
         if name in output.keys():
@@ -57,3 +60,7 @@ def glcm_sliced(glcm: GLCM,
             output[name] = [g]
 
     return output
+
+
+def glcm_pixel_normalize(ar: np.ndarray):
+    return ar / ar.sum(axis=2)[..., np.newaxis]
