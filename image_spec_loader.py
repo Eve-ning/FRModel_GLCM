@@ -115,9 +115,13 @@ class ImageSpecLoader:
     def _check_valid(self) -> None:
         """ Performs a final check on the preprocessed data """
 
-        assert (i := self.ar_normalized.shape[-1]) == \
-               (j := len(self.channel_labels)), \
+        i = self.ar_normalized.shape[-1]
+        j = len(self.channel_labels)
+
+        assert i == j, \
             f"Unexpected mismatch in number of labels and channels." \
             f"{i} != {j}"
-        assert (i := np.nanmax(self.ar_normalized)) <= 1, \
+
+        i = np.nanmax(self.ar_normalized)
+        assert i <= 1, \
             f"Unexpected datapoint exceeds 1 despite normalization. {i}"
