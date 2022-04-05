@@ -1,23 +1,20 @@
 from __future__ import annotations
 
 import os
-import pickle
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
+from conf import INPUT_DIR, BOUNDS_FILE, IMAGE_EXTENSIONS, OUTPUT_DIR
 from glcm_cupy import *
-
-from conf import INPUT_DIR, BOUNDS_FILE, IMAGE_EXTENSIONS, OUTPUT_DIR, FEATURES
 from glcm_sliced import glcm_sliced
 from image_spec_loader import ImageSpecLoader
 
 
 @dataclass
 class FRModelGLCM:
-    bin_to: int = 16
     scale_division: int = 1
-
+    glcm_in: GLCM = GLCM(bin_to=16, bin_from=1)
     save_file_ext: str = ".pickle"
 
     def run(self):
@@ -29,35 +26,14 @@ class FRModelGLCM:
                 continue
 
             im_paths = self.get_im_paths(input_dir)
-
             im_spec = ImageSpecLoader.load(im_paths)
-            slices = glcm_sliced(
-                GLCM(bin_to=self.bin_to, bin_from=1),
+            glcm_sliced(
+                self.glcm_in,
                 ar=im_spec.ar_normalized,
                 bounds_path=bounds_path,
-                scale_division=self.scale_division
+                scale_division=self.scale_division,
+                save_file_path=self.save_file_path(input_dir)
             )
-            self.save(
-                dict(glcm=slices,
-                     channels=im_spec.channel_labels,
-                     features=FEATURES),
-                input_dir)
-
-    def save(self, obj: object, input_dir: Path) -> None:
-        """ Saves the object, relative to the input dir's pathing
-
-        Parameters
-        ----------
-        obj
-            Object to pickle and save
-        input_dir
-            The Pathing of the input images
-
-        """
-        save_file = self.save_file_path(input_dir)
-        save_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(save_file, "wb") as f:
-            pickle.dump(obj, f)
 
     def save_file_path(self, input_dir: Path) -> Path:
         """ Get the Save File Path
@@ -75,7 +51,8 @@ class FRModelGLCM:
         """
         return OUTPUT_DIR \
                / Path(os.path.join(*input_dir.parts[1:])) \
-               / (f"{self.bin_to}bins_{self.scale_division}xDownScale"
+               / (f"{self.glcm_in.radius}rad_{self.glcm_in.step_size}step_"
+                  f"{self.glcm_in.bin_to}bins_{self.scale_division}xDownScale"
                   + self.save_file_ext)
 
     @staticmethod
@@ -126,4 +103,12 @@ class FRModelGLCM:
         return self.save_file_path(input_dir).exists()
 
 
-FRModelGLCM(bin_to=2**6).run()
+FRModelGLCM(
+    scale_division=3,
+    glcm_in=GLCM(bin_to=2 ** 7, radius=4)
+).run()
+FRModelGLCM(
+    scale_division=3,
+    glcm_in=GLCM(bin_to=2 ** 7, radius=4, step_size=4)
+).run()
+# FRModelGLCM(bin_to=2**5, scale_division=5).run()
