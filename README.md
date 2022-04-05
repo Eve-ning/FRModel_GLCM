@@ -1,6 +1,43 @@
 # FRModel_GLCM
  GLCM Parser for FRModel
 
+# Output Format
+
+shape = `(Height, Width, Channel, Features)`
+
+## Channels
+```
+Wideband Red = 0
+Wideband Green = 1
+Wideband Blue = 2
+RedEdge = 3
+Blue = 4
+NIR = 5
+Red = 6
+Green = 7
+```          
+## Features
+```
+NONE = 0
+HOMOGENEITY = 1
+CONTRAST = 2
+ASM = 3
+MEAN_I = 4
+MEAN_J = 5
+VAR_I = 6
+VAR_J = 7
+CORRELATION = 8
+```
+## Example
+```py
+import pickle
+
+with open("...pickle", "rb") as f:
+    ar = pickle.load(f)
+    
+ar_rededge_meanj = ar[..., 3, 5]    
+ar_wbgreen_correlation = ar[..., 1, 8]
+```
 # Instructions
 
 ## Dependencies
