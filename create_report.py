@@ -7,30 +7,18 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
-with open("outputs/18Dec2020/8bins_5xDownScale.pickle", "rb") as f:
+from conf import CHANNELS, FEATURES
+
+with open("outputs/18Dec2020/128bins_1xDownScale/Campnosperma Auriculatum_27.npz", "rb") as f:
     out = pickle.load(f)
 
-# %%
-trees = out['glcm']['Falcataria Moluccana']
-channels = out['channels']
-features = out['features']
-tree = trees[1]
+channels = CHANNELS
+features = FEATURES
 
-#%%
-print(np.max(tree[...,0]))
-print(np.max(tree[...,1]))
-print(np.max(tree[...,2]))
-print(np.max(tree[...,3]))
-print(np.max(tree[...,4]))
-print(np.max(tree[...,5]))
-print(np.max(tree[...,6]))
-print(np.max(tree[...,7]))
-print(np.max(tree[...,8]))
-# %%
-
+tree = out
 def create_image():
 
-    fig, axs = plt.subplots(8, 9, figsize=(10, 10))
+    fig, axs = plt.subplots(8, 9, figsize=(20, 20))
     for ij in tqdm(range(8 * 9), desc='Creating Image Plots'):
         i = ij // 9
         j = ij % 9
@@ -50,7 +38,6 @@ def create_image():
 
 create_image()
 
-# %%
 #%%
 def create_hist():
 
