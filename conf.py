@@ -28,14 +28,22 @@ OUTPUT_DIR = Path("outputs")
 BOUNDS_FILE = "bounds.csv"
 
 IMAGE_EXTENSIONS = ['tif', 'png', 'jpg']
-FEATURES = ["NONE",
-            "HOMOGENEITY",
-            "CONTRAST",
-            "ASM",
-            "MEAN_I",
-            "MEAN_J",
-            "VAR_I",
-            "VAR_J",
-            "CORRELATION",]
+CHANNELS = ["Wideband Red",
+            "Wideband Green",
+            "Wideband Blue",
+            "RedEdge",
+            "Blue",
+            "NIR",
+            "Red",
+            "Green",]
+FEATURES = ["NONE=0",
+            "HOMOGENEITY=0",
+            "CONTRAST=0",
+            "ASM=0",
+            "MEAN_I=0",
+            "MEAN_J=0",
+            "VAR_I=0",
+            "VAR_J=0",
+            "CORRELATION=0",]
 
 
