@@ -5,25 +5,26 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
-from conf import INPUT_DIR, BOUNDS_FILE, IMAGE_EXTENSIONS, OUTPUT_DIR
+from conf import INPUT_DIR, BOUNDS_FILE, IMAGE_EXTENSIONS, OUTPUT_DIR, PROJ_DIR
 from glcm_cupy import *
-from glcm_sliced import glcm_sliced
-from image_spec_loader import ImageSpecLoader
+from create_glcm.glcm_sliced import glcm_sliced
+from create_glcm.image_spec_loader import ImageSpecLoader
 
 
 @dataclass
 class FRModelGLCM:
     scale_division: int = 1
     glcm_in: GLCM = GLCM(bin_to=16, bin_from=1)
-    save_file_ext: str = ".pickle"
+    minmax: bool = False
+    pixel_norm: bool = False
 
     def run(self):
         """ Runs the script to convert images to GLCM """
         for bounds_path in self.get_bounds_paths():
             input_dir = bounds_path.parent
-            if self.glcm_exists(input_dir):
-                print(f"GLCM already exists for {input_dir}. Skipping")
-                continue
+            # if self.glcm_exists(input_dir):
+            #     print(f"GLCM already exists for {input_dir}. Skipping")
+            #     continue
 
             im_paths = self.get_im_paths(input_dir)
             im_spec = ImageSpecLoader.load(im_paths)
@@ -32,28 +33,29 @@ class FRModelGLCM:
                 ar=im_spec.ar_normalized,
                 bounds_path=bounds_path,
                 scale_division=self.scale_division,
-                save_file_path=self.save_file_path(input_dir)
+                save_dir=self.save_dir(input_dir),
+                minmax=self.minmax,
+                pixel_norm=self.pixel_norm,
             )
 
-    def save_file_path(self, input_dir: Path) -> Path:
-        """ Get the Save File Path
+    def save_dir(self, input_dir: Path) -> Path:
+        """ Get the Save File Dir Path
 
         Parameters
         ----------
         input_dir
             Path of the Input Directory
-
-        Returns
-        -------
-        Path
-            Path of the output file
-
         """
         return OUTPUT_DIR \
-               / Path(os.path.join(*input_dir.parts[1:])) \
-               / (f"{self.glcm_in.radius}rad_{self.glcm_in.step_size}step_"
-                  f"{self.glcm_in.bin_to}bins_{self.scale_division}xDownScale"
-                  + self.save_file_ext)
+               / Path(os.path.join(*input_dir.relative_to(PROJ_DIR).parts[1:])) \
+               / (
+                   f"{'minmax_' if self.minmax else ''}"
+                   f"{'pixnorm_' if self.pixel_norm else ''}"
+                   f"{self.glcm_in.radius}rad_"
+                   f"{self.glcm_in.step_size}step_"
+                   f"{self.glcm_in.bin_to}bins_"
+                   f"{self.scale_division}xDownScale"
+               )
 
     @staticmethod
     def get_bounds_paths() -> List[Path]:
@@ -100,15 +102,17 @@ class FRModelGLCM:
         bool
             If GLCM exists
         """
-        return self.save_file_path(input_dir).exists()
+        return self.save_dir(input_dir).exists()
 
 
-FRModelGLCM(
-    scale_division=3,
-    glcm_in=GLCM(bin_to=2 ** 7, radius=4)
-).run()
-FRModelGLCM(
-    scale_division=3,
-    glcm_in=GLCM(bin_to=2 ** 7, radius=4, step_size=4)
-).run()
-# FRModelGLCM(bin_to=2**5, scale_division=5).run()
+def create_glcm(bit: int,
+                radius: int,
+                step_size: int):
+    FRModelGLCM(
+        glcm_in=GLCM(
+            bin_from=1,
+            bin_to=2 ** bit,
+            radius=radius,
+            step_size=step_size
+        ),
+    ).run()
