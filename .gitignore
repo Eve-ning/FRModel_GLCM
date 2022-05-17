@@ -2,7 +2,7 @@ key/*
 cred/*
 .idea/*
 *.tif
-outputs/*
+glcm/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
