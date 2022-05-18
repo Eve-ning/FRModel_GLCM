@@ -7,8 +7,7 @@ from typing import List
 
 from conf import INPUT_DIR, BOUNDS_FILE, IMAGE_EXTENSIONS, OUTPUT_DIR, PROJ_DIR
 from glcm_cupy import *
-from create_glcm.glcm_sliced import glcm_sliced
-from create_glcm.image_spec_loader import ImageSpecLoader
+from create_glcm import glcm_sliced, ImageSpecLoader
 
 
 @dataclass
