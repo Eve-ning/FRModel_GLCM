@@ -153,9 +153,11 @@ def create_glcm_cross(bit: int,
         bin_from=1,
         bin_to=2 ** bit,
         radius=radius,
+        ix_combos=list(combinations(range(3, 8), 2))
     )
     FRModelGLCM(
         glcm_in=g,
-        fn_append="_all_combos",
-        output_dir=OUTPUT_DIR_GLCM_CROSS
+        fn_append="_nb",
+        output_dir=OUTPUT_DIR_GLCM_CROSS,
+        info_md_file_name=INFO_CROSS_MD_FILE
     ).run()
