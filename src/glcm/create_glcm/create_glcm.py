@@ -54,7 +54,7 @@ class FRModelGLCM:
 
             return self.output_dir \
                    / Path(
-                os.path.join(*input_dir.relative_to(PROJ_DIR).parts[1:])) \
+                os.path.join(*input_dir.relative_to(DATA_DIR).parts[1:])) \
                    / (
                        f"{'minmax_' if self.minmax else ''}"
                        f"{'pixnorm_' if self.pixel_norm else ''}"
@@ -67,7 +67,7 @@ class FRModelGLCM:
 
             return self.output_dir \
                    / Path(
-                os.path.join(*input_dir.relative_to(PROJ_DIR).parts[1:])) \
+                os.path.join(*input_dir.relative_to(DATA_DIR).parts[1:])) \
                    / (
                        f"{'minmax_' if self.minmax else ''}"
                        f"{'pixnorm_' if self.pixel_norm else ''}"
