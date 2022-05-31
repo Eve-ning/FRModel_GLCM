@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import os
+import shutil
 from dataclasses import dataclass, field
+from itertools import combinations
 from pathlib import Path
 from typing import List
 
-from conf import \
-    INPUT_DIR, BOUNDS_FILE, PROJ_DIR, \
-    OUTPUT_DIR_GLCM, OUTPUT_DIR_GLCM_CROSS
+from conf import INPUT_DIR, BOUNDS_FILE, OUTPUT_DIR_GLCM, \
+    OUTPUT_DIR_GLCM_CROSS, INFO_MD_FILE, INFO_CROSS_MD_FILE, DATA_DIR
 from glcm.create_glcm import glcm_sliced, ImageSpecLoader
 from glcm.create_glcm.conf import IMAGE_EXTENSIONS
 from glcm_cupy import GLCM, GLCMCross
@@ -23,9 +24,11 @@ class FRModelGLCM:
     pixel_norm: bool = False
     fn_append: str = ""
     output_dir: Path = OUTPUT_DIR_GLCM
+    info_md_file_name: Path = INFO_MD_FILE
 
     def run(self):
         """ Runs the script to convert images to GLCM """
+
         for bounds_path in self.get_bounds_paths():
             input_dir = bounds_path.parent
 
@@ -40,6 +43,7 @@ class FRModelGLCM:
                 minmax=self.minmax,
                 pixel_norm=self.pixel_norm,
             )
+            self.copy_info_md(self.save_dir(input_dir))
 
     def save_dir(self, input_dir: Path) -> Path:
         """ Get the Save File Dir Path
@@ -124,6 +128,9 @@ class FRModelGLCM:
         """
         return self.save_dir(input_dir).exists()
 
+    def copy_info_md(self, save_dir):
+        shutil.copy(self.info_md_file_name, save_dir)
+
 
 def create_glcm(bit: int,
                 radius: int,
@@ -135,13 +142,13 @@ def create_glcm(bit: int,
             radius=radius,
             step_size=step_size
         ),
-        output_dir=OUTPUT_DIR_GLCM
+        output_dir=OUTPUT_DIR_GLCM,
+        info_md_file_name=INFO_MD_FILE
     ).run()
 
 
 def create_glcm_cross(bit: int,
-                      radius: int,
-                      channels: List[int]):
+                      radius: int):
     g = GLCMCross(
         bin_from=1,
         bin_to=2 ** bit,

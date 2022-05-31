@@ -3,11 +3,9 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pickle
-import shutil
 from pathlib import Path
 from typing import Dict
 
-from conf import INFO_MD_FILE
 from glcm_cupy import GLCM
 from glcm_cupy.glcm_base import GLCMBase
 
@@ -87,7 +85,6 @@ def glcm_sliced(glcm: GLCMBase,
         with open(save_dump, "wb") as f:
             pickle.dump(g, f)
 
-        copy_info_md(save_dir)
         break
 
 
@@ -97,7 +94,3 @@ def glcm_pixel_norm(ar: np.ndarray):
 
 def minmax_ar(ar: np.ndarray):
     return (ar - np.nanmin(ar)) / (np.nanmax(ar) - np.nanmin(ar))
-
-
-def copy_info_md(save_dir):
-    shutil.copy(INFO_MD_FILE, save_dir)
