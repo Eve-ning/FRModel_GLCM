@@ -11,7 +11,9 @@ from typing import List, Tuple
 
 from conf import OUTPUT_DIR_GLCM, OUTPUT_DIR_GLCM_CROSS
 from glcm.create_report.conf import FEATURES, NO_OF_FEATURES, CHANNELS, \
-    CHANNELS_CROSS
+    CHANNELS_CROSS, HIST_BINS, STACKED_HIST_ALPHA, GLCM_STACK_HIST_FIGSIZE, \
+    GLCM_HIST_FIGSIZE, GLCM_IM_FIGSIZE, GLCM_CROSS_STACK_HIST_FIGSIZE, \
+    GLCM_CROSS_HIST_FIGSIZE, GLCM_CROSS_IM_FIGSIZE
 from glcm.upload import GCS
 
 
@@ -20,6 +22,7 @@ class Plot:
     tree_path: Path
     gcs: GCS
     channel_names: List[str]
+    figsize: Tuple[int, int]
     fig: plt.Figure = field(init=False, default=None)
     axes: List[List[plt.Axes]] = field(init=False, default=None)
 
@@ -28,11 +31,6 @@ class Plot:
             len(self.channel_names), NO_OF_FEATURES,
             figsize=self.figsize
         )
-
-    @property
-    @abstractmethod
-    def figsize(self) -> Tuple[int, int]:
-        ...
 
     @property
     def exists(self) -> bool:
@@ -73,9 +71,6 @@ class Plot:
 
 @dataclass
 class StackedHistPlot(Plot):
-    @property
-    def figsize(self) -> Tuple[int, int]:
-        return 25, 20
 
     def init_plot(self):
         super().init_plot()
@@ -91,7 +86,8 @@ class StackedHistPlot(Plot):
 
     def plot_fn(self, ax: plt.Axes, tree: np.ndarray, **kwargs):
         ax.hist(
-            tree.flatten(), bins=100, alpha=0.3, density=True,
+            tree.flatten(), bins=HIST_BINS, alpha=STACKED_HIST_ALPHA,
+            density=True,
             label=kwargs['tree_name'] if
             kwargs['channel'] + kwargs['feature'] == 0 else None
         )
@@ -99,9 +95,10 @@ class StackedHistPlot(Plot):
 
 @dataclass
 class ImagePlot(Plot):
-    @property
-    def figsize(self) -> Tuple[int, int]:
-        return 20, 20
+
+    def save(self):
+        self.fig.tight_layout()
+        super().save()
 
     @property
     def save_path(self) -> Path:
@@ -113,22 +110,27 @@ class ImagePlot(Plot):
 
 @dataclass
 class HistPlot(Plot):
-    @property
-    def figsize(self) -> Tuple[int, int]:
-        return 15, 10
+
+    def save(self):
+        self.fig.tight_layout()
+        super().save()
 
     @property
     def save_path(self) -> Path:
         return Path(Path(self.tree_path.as_posix() + "_hist.jpg"))
 
     def plot_fn(self, ax: plt.Axes, tree: np.ndarray, **kwargs):
-        ax.hist(tree.flatten())
+        ax.hist(tree.flatten(), bins=HIST_BINS)
 
 
 @dataclass
 class Report:
     channel_names: List[str]
-    output_dir: Path = OUTPUT_DIR_GLCM
+    output_dir: Path
+    stack_hist_figsize: Tuple[int, int]
+    hist_figsize: Tuple[int, int]
+    im_figsize: Tuple[int, int]
+
     gcs = GCS()
 
     @property
@@ -143,14 +145,17 @@ class Report:
         for set_path in self.set_paths:
             tree_paths = list(set_path.glob("*.npz"))
             stack_hist_plt = StackedHistPlot(
-                set_path, self.gcs, self.channel_names
+                set_path, self.gcs, self.channel_names,
+                figsize=self.stack_hist_figsize
             )
             t = tqdm(tree_paths)
             for tree_path in t:
                 tree_path: Path
                 t.set_description(f"Report {tree_path.stem}")
-                im_plt = ImagePlot(tree_path, self.gcs, self.channel_names)
-                hist_plt = HistPlot(tree_path, self.gcs, self.channel_names)
+                im_plt = ImagePlot(tree_path, self.gcs, self.channel_names,
+                                   self.im_figsize)
+                hist_plt = HistPlot(tree_path, self.gcs, self.channel_names,
+                                    self.hist_figsize)
                 tree_name = tree_path.stem.split("_")[0]
 
                 if stack_hist_plt and im_plt and hist_plt: continue
@@ -178,12 +183,19 @@ class Report:
 def create_report_glcm():
     Report(
         channel_names=CHANNELS,
-        output_dir=OUTPUT_DIR_GLCM
+        output_dir=OUTPUT_DIR_GLCM,
+        stack_hist_figsize=GLCM_STACK_HIST_FIGSIZE,
+        hist_figsize=GLCM_HIST_FIGSIZE,
+        im_figsize=GLCM_IM_FIGSIZE,
+
     ).create_report()
 
 
 def create_report_glcm_cross():
     Report(
         channel_names=CHANNELS_CROSS,
-        output_dir=OUTPUT_DIR_GLCM_CROSS
+        output_dir=OUTPUT_DIR_GLCM_CROSS,
+        stack_hist_figsize=GLCM_CROSS_STACK_HIST_FIGSIZE,
+        hist_figsize=GLCM_CROSS_HIST_FIGSIZE,
+        im_figsize=GLCM_CROSS_IM_FIGSIZE,
     ).create_report()
