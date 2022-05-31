@@ -8,7 +8,7 @@ from pathlib import Path
 from tqdm import tqdm
 from typing import List, Dict
 
-from conf import OUTPUT_DIR_GLCM, OUTPUT_DIR_GLCM_CROSS, KEY_PATH
+from conf import OUTPUT_DIR_GLCM, OUTPUT_DIR_GLCM_CROSS, KEY_PATH, DATA_DIR
 
 
 @dataclass
@@ -24,14 +24,18 @@ class GCS:
 
     def exists_on_cloud(self, local_path: Path):
         """ Whether the local file exists on the cloud """
-        return self.bucket.blob(local_path.as_posix()).exists()
+        return self.bucket.blob(
+            local_path.relative_to(DATA_DIR).as_posix()
+        ).exists()
 
     def upload(self, local_path: Path, delete_on_upload: bool = True):
         """ Uploads current file to the remote """
+        remote_path = local_path.relative_to(DATA_DIR)
+
         if not self.exists_on_cloud(local_path):
-            self.bucket.blob(local_path.as_posix()) \
+            self.bucket.blob(remote_path.as_posix()) \
                 .upload_from_filename(local_path.as_posix())
-        if delete_on_upload: local_path.unlink(missing_ok=True)
+        if delete_on_upload: local_path.unlink()
 
     def download(self, remote_path: Path):
         """ Uploads current file to the remote """
@@ -93,3 +97,5 @@ def upload_glcm():
 
 def upload_glcm_cross():
     GCS().upload_dir(OUTPUT_DIR_GLCM_CROSS)
+
+
