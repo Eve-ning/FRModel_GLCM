@@ -25,5 +25,4 @@ for set_path, tree_paths in gcs.remote_set_paths().items():
             gcs.download(tree_path)
 
     Report(set_path).create_report()
-    gcs.upload_dir(set_path, False)
-    break
+    gcs.upload_dir(set_path, True)

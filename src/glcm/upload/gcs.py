@@ -8,7 +8,7 @@ from pathlib import Path
 from tqdm import tqdm
 from typing import List, Dict
 
-from conf import OUTPUT_DIR, KEY_PATH
+from conf import OUTPUT_DIR_GLCM, OUTPUT_DIR_GLCM_CROSS, KEY_PATH
 
 
 @dataclass
@@ -42,11 +42,12 @@ class GCS:
                 .download_to_filename(remote_path.as_posix())
 
     def upload_dir(self,
-                   local_dir: Path = OUTPUT_DIR,
+                   local_dir: Path = OUTPUT_DIR_GLCM,
                    delete_on_upload: bool = True):
         """ Uploads current directory to the remote """
         for ext in ("jpg", "md", "npz"):
-            for fn in (t := tqdm(list(local_dir.glob(f"**/*.{ext}")))):
+            t = tqdm(list(local_dir.glob(f"**/*.{ext}")))
+            for fn in t:
                 t.set_description(f"Uploading {fn.stem}")
                 self.upload(Path(fn), delete_on_upload)
 
@@ -84,3 +85,11 @@ class GCS:
             sets[set_path] = tree_path
 
         return sets
+
+
+def upload_glcm():
+    GCS().upload_dir(OUTPUT_DIR_GLCM)
+
+
+def upload_glcm_cross():
+    GCS().upload_dir(OUTPUT_DIR_GLCM_CROSS)

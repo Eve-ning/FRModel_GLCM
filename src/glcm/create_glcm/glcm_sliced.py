@@ -9,9 +9,10 @@ from typing import Dict
 
 from conf import INFO_MD_FILE
 from glcm_cupy import GLCM
+from glcm_cupy.glcm_base import GLCMBase
 
 
-def glcm_sliced(glcm: GLCM,
+def glcm_sliced(glcm: GLCMBase,
                 ar: np.ndarray,
                 bounds_path: Path,
                 save_dir: Path = Path(""),
@@ -76,17 +77,19 @@ def glcm_sliced(glcm: GLCM,
 
         g = glcm.run(ar_slice).astype(np.float16)
 
-        crop = glcm.step_size + glcm.radius
-
-        g = np.concatenate(
-            [ar_slice[crop:-crop, crop:-crop, :, np.newaxis], g],
-            axis=3
-        )
+        if isinstance(glcm, GLCM):
+            crop = glcm.step_size + glcm.radius
+            g = np.concatenate(
+                [ar_slice[crop:-crop, crop:-crop, :, np.newaxis], g],
+                axis=3
+            )
 
         with open(save_dump, "wb") as f:
             pickle.dump(g, f)
 
         copy_info_md(save_dir)
+        break
+
 
 def glcm_pixel_norm(ar: np.ndarray):
     return ar / ar.sum(axis=2)[..., np.newaxis]
@@ -98,4 +101,3 @@ def minmax_ar(ar: np.ndarray):
 
 def copy_info_md(save_dir):
     shutil.copy(INFO_MD_FILE, save_dir)
-

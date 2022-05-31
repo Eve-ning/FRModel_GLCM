@@ -7,7 +7,7 @@ from typing import List, Callable
 import numpy as np
 from tqdm import tqdm
 
-from conf import FILE_INFO
+from glcm.create_glcm.conf import FILE_INFO
 
 
 @dataclass

@@ -9,20 +9,23 @@ from pathlib import Path
 from tqdm import tqdm
 from typing import List, Tuple
 
-from conf import CHANNELS, FEATURES, NO_OF_FEATURES, NO_OF_CHANNELS, OUTPUT_DIR
-from upload import GCS
+from conf import OUTPUT_DIR_GLCM, OUTPUT_DIR_GLCM_CROSS
+from glcm.create_report.conf import FEATURES, NO_OF_FEATURES, CHANNELS, \
+    CHANNELS_CROSS
+from glcm.upload import GCS
 
 
 @dataclass
 class Plot:
     tree_path: Path
     gcs: GCS
+    channel_names: List[str]
     fig: plt.Figure = field(init=False, default=None)
-    axes: plt.Axes = field(init=False, default=None)
+    axes: List[List[plt.Axes]] = field(init=False, default=None)
 
     def init_plot(self):
         self.fig, self.axes = plt.subplots(
-            NO_OF_CHANNELS, NO_OF_FEATURES,
+            len(self.channel_names), NO_OF_FEATURES,
             figsize=self.figsize
         )
 
@@ -48,7 +51,8 @@ class Plot:
         if channel == 0:
             ax.set_title(FEATURES[feature])
         if feature == 0:
-            ax.set_ylabel(CHANNELS[channel], rotation='horizontal', ha='right')
+            ax.set_ylabel(self.channel_names[channel],
+                          rotation='horizontal', ha='right')
 
     @abstractmethod
     def plot_fn(self, ax: plt.Axes, tree: np.ndarray, **kwargs):
@@ -75,7 +79,7 @@ class StackedHistPlot(Plot):
 
     def init_plot(self):
         super().init_plot()
-        self.fig.subplots_adjust(right=0.80)
+        self.fig.subplots_adjust(right=0.88)
 
     def save(self):
         self.fig.legend()
@@ -123,8 +127,8 @@ class HistPlot(Plot):
 
 @dataclass
 class Report:
-    output_dir: Path = OUTPUT_DIR
-
+    channel_names: List[str]
+    output_dir: Path = OUTPUT_DIR_GLCM
     gcs = GCS()
 
     @property
@@ -135,16 +139,18 @@ class Report:
         ).tolist()
 
     def create_report(self):
+
         for set_path in self.set_paths:
             tree_paths = list(set_path.glob("*.npz"))
             stack_hist_plt = StackedHistPlot(
-                set_path, self.gcs
+                set_path, self.gcs, self.channel_names
             )
-            for tree_path in (t := tqdm(tree_paths)):
+            t = tqdm(tree_paths)
+            for tree_path in t:
                 tree_path: Path
                 t.set_description(f"Report {tree_path.stem}")
-                im_plt = ImagePlot(tree_path, self.gcs)
-                hist_plt = HistPlot(tree_path, self.gcs)
+                im_plt = ImagePlot(tree_path, self.gcs, self.channel_names)
+                hist_plt = HistPlot(tree_path, self.gcs, self.channel_names)
                 tree_name = tree_path.stem.split("_")[0]
 
                 if stack_hist_plt and im_plt and hist_plt: continue
@@ -153,7 +159,7 @@ class Report:
                     tree = pickle.load(f)
 
                 for f_ix in range(NO_OF_FEATURES):
-                    for ch_ix in range(NO_OF_CHANNELS):
+                    for ch_ix in range(len(self.channel_names)):
                         plt_args = tree, ch_ix, f_ix, tree_name
                         if not hist_plt:
                             hist_plt.plot(*plt_args)
@@ -167,3 +173,17 @@ class Report:
 
             if not stack_hist_plt: stack_hist_plt.save()
             plt.close('all')
+
+
+def create_report_glcm():
+    Report(
+        channel_names=CHANNELS,
+        output_dir=OUTPUT_DIR_GLCM
+    ).create_report()
+
+
+def create_report_glcm_cross():
+    Report(
+        channel_names=CHANNELS_CROSS,
+        output_dir=OUTPUT_DIR_GLCM_CROSS
+    ).create_report()
